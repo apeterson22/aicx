@@ -1,0 +1,18 @@
+[package]
+name = "aicx-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+name = "aicx_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow.workspace = true
+aicx-core = { path = "../../crates/aicx-core" }
+pyo3.workspace = true
+serde_json.workspace = true
+

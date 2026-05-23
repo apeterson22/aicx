@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "aicx"
+version = "0.1.0"
+description = "Python bindings for the Rust-first AICX archive engine"
+requires-python = ">=3.10"
+
+[tool.maturin]
+python-source = "python"
+module-name = "aicx_native"
+

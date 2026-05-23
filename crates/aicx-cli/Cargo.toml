@@ -1,0 +1,14 @@
+[package]
+name = "aicx-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+aicx-core = { path = "../aicx-core" }
+clap.workspace = true
+serde_json.workspace = true
+
