@@ -5,53 +5,34 @@ import sys
 import types
 
 
-def test_pack_prefers_native_extension(monkeypatch):
+def test_compatibility_shim_prefers_native_extension(monkeypatch):
     fake_native = types.SimpleNamespace()
-
     calls = []
 
-    def pack(inputs, output_path, profile, chunk_size, hash_algorithm):
-        calls.append((inputs, output_path, profile, chunk_size, hash_algorithm))
+    def pack(*args, **kwargs):
+        calls.append(("pack", args, kwargs))
         return "native-pack"
 
-    fake_native.pack = pack
-    fake_native.unpack = lambda *args, **kwargs: "native-unpack"
-
-    monkeypatch.setitem(sys.modules, "aicx_native", fake_native)
-    sys.modules.pop("aicx.container", None)
-
-    try:
-        container = importlib.import_module("aicx.container")
-
-        result = container.pack(["alpha.txt"], "archive.aicx", chunk_size=1024)
-
-        assert result == "native-pack"
-        assert calls == [(["alpha.txt"], "archive.aicx", "balanced", 1024, "blake3")]
-    finally:
-        sys.modules.pop("aicx.container", None)
-
-
-def test_unpack_prefers_native_extension(monkeypatch):
-    fake_native = types.SimpleNamespace()
-
-    calls = []
-
-    def unpack(archive_path, target_dir, paths, exact, overwrite):
-        calls.append((archive_path, target_dir, paths, exact, overwrite))
+    def unpack(*args, **kwargs):
+        calls.append(("unpack", args, kwargs))
         return "native-unpack"
 
-    fake_native.pack = lambda *args, **kwargs: "native-pack"
+    fake_native.pack = pack
     fake_native.unpack = unpack
 
     monkeypatch.setitem(sys.modules, "aicx_native", fake_native)
+    sys.modules.pop("aicx", None)
     sys.modules.pop("aicx.container", None)
 
     try:
-        container = importlib.import_module("aicx.container")
+        package = importlib.import_module("aicx")
 
-        result = container.unpack("archive.aicx", "restored")
-
-        assert result == "native-unpack"
-        assert calls == [("archive.aicx", "restored", None, False, False)]
+        assert package.pack("source", "archive") == "native-pack"
+        assert package.unpack("archive", "restored") == "native-unpack"
+        assert calls == [
+            ("pack", ("source", "archive"), {}),
+            ("unpack", ("archive", "restored"), {}),
+        ]
     finally:
+        sys.modules.pop("aicx", None)
         sys.modules.pop("aicx.container", None)

@@ -7,7 +7,7 @@ This guide applies to the entire `aicx/` repository root. Read the more specific
 - `crates/aicx-core/` owns archive models, chunking, classification, transforms, hashing, validation, and pack/unpack logic.
 - `crates/aicx-cli/` owns the Rust CLI and command wiring.
 - `bindings/python/` owns the PyO3 + maturin Python bindings.
-- `aicx/` is the legacy Python compatibility layer and reference implementation; it should prefer `aicx_native` when available.
+- `aicx/` is a minimal Python compatibility shim that forwards to `aicx_native`.
 - `PLAN.md` and `copilot-plan.md` are the planning sources of truth for implementation direction.
 
 ## Commands
@@ -24,7 +24,7 @@ This guide applies to the entire `aicx/` repository root. Read the more specific
 ## Security
 - Treat all archive inputs as hostile.
 - Do not weaken validation, path normalization, or hash checks for convenience.
-- Keep AegisQR implementation out of this repository; only preserve integration boundaries.
+- Keep any UI or downstream consumer thin and backed by `aicx-core` rather than reimplementing archive logic.
 
 ## Agent Workflow
 - Work from the repo root inside `aicx/`.
