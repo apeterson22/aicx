@@ -15,7 +15,7 @@ permissions:
 jobs:
   analyze-rust:
     name: Analyze Rust
-    runs-on: ubuntu-latest
+    runs-on: aegis-local
     steps:
       - uses: actions/checkout@v6
       - uses: github/codeql-action/init@v4
@@ -28,7 +28,7 @@ jobs:
 
   analyze-python:
     name: Analyze Python
-    runs-on: ubuntu-latest
+    runs-on: aegis-local
     steps:
       - uses: actions/checkout@v6
       - uses: github/codeql-action/init@v4
