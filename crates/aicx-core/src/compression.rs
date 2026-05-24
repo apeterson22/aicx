@@ -91,7 +91,11 @@ pub fn compress(codec: CodecKind, level: i32, data: &[u8]) -> Result<Vec<u8>> {
     })
 }
 
-fn read_limited<R: Read>(mut reader: R, max_output_size: usize, codec_name: &str) -> Result<Vec<u8>> {
+fn read_limited<R: Read>(
+    mut reader: R,
+    max_output_size: usize,
+    codec_name: &str,
+) -> Result<Vec<u8>> {
     let mut output = Vec::new();
     let mut chunk = [0u8; 8192];
 
