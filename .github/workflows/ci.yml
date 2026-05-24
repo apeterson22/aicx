@@ -14,6 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Format Rust workspace
+        run: cargo fmt --all -- --check
+      - name: Lint Rust workspace
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test Rust workspace
         run: cargo test --workspace
 
@@ -31,4 +37,3 @@ jobs:
       - name: Build Python bindings
         working-directory: bindings/python
         run: maturin build --release
-

@@ -4,21 +4,16 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ArchiveProfile {
     Fast,
+    #[default]
     Balanced,
     Max,
     QrMax,
     Agent,
     Secure,
-}
-
-impl Default for ArchiveProfile {
-    fn default() -> Self {
-        Self::Balanced
-    }
 }
 
 impl Display for ArchiveProfile {
@@ -50,17 +45,12 @@ impl FromStr for ArchiveProfile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum HashAlgorithm {
+    #[default]
     Blake3,
     Sha256,
-}
-
-impl Default for HashAlgorithm {
-    fn default() -> Self {
-        Self::Blake3
-    }
 }
 
 impl Display for HashAlgorithm {
@@ -325,9 +315,17 @@ pub struct ArchiveVerification {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArchiveDigests {
+    pub manifest_digest: String,
+    pub sidecar_digest: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchiveReport {
     pub manifest: ArchiveManifest,
     pub sidecar: ArchiveSidecar,
+    pub manifest_digest: String,
+    pub sidecar_digest: String,
     pub verification: ArchiveVerification,
 }
 
@@ -335,6 +333,8 @@ pub struct ArchiveReport {
 pub struct ArchiveInspection {
     pub manifest: ArchiveManifest,
     pub sidecar: ArchiveSidecar,
+    pub manifest_digest: String,
+    pub sidecar_digest: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

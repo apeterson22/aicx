@@ -4,12 +4,12 @@ AICX means Adaptive Intelligent Compression eXchange.
 
 AICX is a deterministic archive and metadata engine for adaptive compression, content-aware classification, selective extraction, sidecar inspection, and future query/dedupe layers.
 
-AegisQR is a separate repository and should not be implemented here. AICX should only expose archive files, hashes, manifests, and sidecars that AegisQR can later wrap, encrypt, sign, and transport.
+AICX also defines the enterprise exchange contract for repository plugins such as Artifactory and Nexus. The shared integration plan lives in `plan-enterprise.md`. AegisQR is a separate repository and should not be implemented here; it can later wrap, sign, encrypt, and transport AICX bundles.
 
 Primary goal:
 Create a production-ready Rust-first starter implementation of AICX with CLI, archive format, adaptive compression, deterministic manifests, hashing, sidecar metadata, selective extraction, tests, scenario validations, and documentation.
 
-Python support should be delivered through PyO3 + maturin over the Rust core. The legacy Python prototype under `aicx/` remains as a reference only.
+Python support should be delivered through PyO3 + maturin over the Rust core. The legacy Python compatibility shim under `aicx/` is retained only for compatibility.
 
 Core product goal:
 AICX should become an AI-native intelligent archive format, not just another compression tool.
@@ -20,11 +20,18 @@ It should support:
 - content-aware classification
 - semantic metadata sidecar
 - agent-readable inspection
+- agent-facing manifest and sidecar digest helpers
+- serialized inspection/report payloads include manifest and sidecar digests
+- a digest-focused CLI command for scripts and agents
+- a shared `ArchiveDigests` payload type for hash-only consumers
+- Python digest helpers that mirror the CLI hash-only surface
+- Python digest_toon helper for TOON-oriented agent consumers
 - selective extraction
 - future deduplication
 - future content-defined chunking
 - future RAG/archive query support
 - future AegisQR integration
+- enterprise repository exchange support via thin plugin adapters and `plan-enterprise.md`
 
 Repository structure:
 
@@ -42,6 +49,7 @@ bindings/
   python/
 examples/
 .github/workflows/ci.yml
+plan-enterprise.md
 
 Use Rust for the production core.
 
@@ -81,8 +89,9 @@ Python-compatible API should be available through the binding layer:
 - aicx.unpack(...)
 - aicx.inspect(...)
 - aicx.extract(...)
-- aicx.query_metadata(...)
+- aicx.sidecar(...)
 - aicx.report(...)
+- aicx.digest(...)
 
 Archive format:
 
@@ -90,7 +99,7 @@ Use extension:
 .aicx
 
 Magic bytes:
-AICX1
+AICX2
 
 MVP logical archive structure:
 - magic
@@ -117,3 +126,9 @@ Archive should support:
 
 Do not include encryption in AICX MVP.
 AICX may add optional integrity and signatures later, but AegisQR owns encryption, signing, QR transfer, enterprise policy, and secure capsule behavior.
+
+Enterprise integration rules:
+- JSON is the canonical API payload format over HTTPS.
+- TOON is allowed as a model-optimized alternate projection of the same payloads.
+- SSH may be used for admin access, tunnels, and host automation, but not as the primary API transport.
+- Repository plugins must stay thin and delegate archive correctness to AICX and transport policy to AegisQR.

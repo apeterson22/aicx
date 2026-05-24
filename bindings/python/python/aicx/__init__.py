@@ -1,14 +1,37 @@
-from aicx_native import compare_profiles, extract, inspect, list_paths, pack, report, sidecar, unpack, verify
+from aicx_native import (
+    compare_profiles,
+    digest,
+    digest_toon,
+    extract,
+    inspect,
+    inspect_toon,
+    manifest_digest,
+    list_paths,
+    pack,
+    report,
+    report_toon,
+    sidecar_digest,
+    sidecar,
+    sidecar_toon,
+    unpack,
+    verify,
+)
 
 __all__ = [
     "compare_profiles",
+    "digest",
+    "digest_toon",
     "extract",
     "inspect",
+    "inspect_toon",
+    "manifest_digest",
     "list_paths",
     "pack",
     "report",
+    "report_toon",
+    "sidecar_digest",
     "sidecar",
+    "sidecar_toon",
     "unpack",
     "verify",
 ]
-

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::model::{
-    ArchiveManifest, ArchiveSidecar, ExtractionHint, FileSidecar, FileKind, SidecarSummary,
+    ArchiveManifest, ArchiveSidecar, ExtractionHint, FileKind, FileSidecar, SidecarSummary,
 };
 
 fn entrypoint_candidate(path: &str) -> bool {
@@ -39,7 +39,8 @@ fn dependency_hint(path: &str) -> bool {
 fn risk_hints(path: &str, kind: FileKind, size: u64) -> Vec<String> {
     let mut hints = Vec::new();
     let lower = path.to_ascii_lowercase();
-    if lower.contains(".github/workflows/") && (lower.ends_with(".yml") || lower.ends_with(".yaml")) {
+    if lower.contains(".github/workflows/") && (lower.ends_with(".yml") || lower.ends_with(".yaml"))
+    {
         hints.push("contains GitHub Actions workflow".to_string());
     }
     if lower.ends_with("dockerfile") {
@@ -81,7 +82,9 @@ pub fn build_sidecar(manifest: &ArchiveManifest) -> ArchiveSidecar {
     let mut query_hints = Vec::new();
 
     for file in &manifest.files {
-        *file_type_counts.entry(file.file_type.to_string()).or_insert(0) += 1;
+        *file_type_counts
+            .entry(file.file_type.to_string())
+            .or_insert(0) += 1;
         if entrypoint_candidate(&file.archive_path) {
             entrypoints.push(file.archive_path.clone());
         }
@@ -108,7 +111,9 @@ pub fn build_sidecar(manifest: &ArchiveManifest) -> ArchiveSidecar {
 
     for chunk in &manifest.chunks {
         *codec_usage.entry(chunk.codec.to_string()).or_insert(0) += 1;
-        *transform_usage.entry(chunk.transform.to_string()).or_insert(0) += 1;
+        *transform_usage
+            .entry(chunk.transform.to_string())
+            .or_insert(0) += 1;
     }
 
     let summary = SidecarSummary {

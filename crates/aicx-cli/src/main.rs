@@ -5,8 +5,9 @@ use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 
 use aicx_core::{
-    compare_profiles, extract_archive, inspect_archive, list_archive_paths, pack_archive,
-    report_archive, verify_archive, ArchiveProfile, HashAlgorithm, PackOptions, Selection,
+    archive_digests, compare_profiles, extract_archive, inspect_archive, list_archive_paths,
+    pack_archive, render_toon, report_archive, verify_archive, ArchiveProfile, HashAlgorithm,
+    PackOptions, Selection,
 };
 
 #[derive(Parser, Debug)]
@@ -63,6 +64,11 @@ enum Commands {
     Report {
         archive: PathBuf,
     },
+    Digest {
+        archive: PathBuf,
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
     Sidecar {
         archive: PathBuf,
         #[arg(long, default_value = "json")]
@@ -116,7 +122,11 @@ fn run() -> Result<()> {
         } => {
             let selection = Selection { paths, exact };
             let manifest = extract_archive(&archive, &out, selection, overwrite)?;
-            println!("unpacked {} files into {}", manifest.file_count, out.display());
+            println!(
+                "unpacked {} files into {}",
+                manifest.file_count,
+                out.display()
+            );
         }
         Commands::Inspect { archive } => {
             let inspection = inspect_archive(&archive)?;
@@ -139,7 +149,11 @@ fn run() -> Result<()> {
                 exact,
             };
             let manifest = extract_archive(&archive, &out, selection, overwrite)?;
-            println!("extracted {} files into {}", manifest.file_count, out.display());
+            println!(
+                "extracted {} files into {}",
+                manifest.file_count,
+                out.display()
+            );
         }
         Commands::Verify { archive } => {
             let verification = verify_archive(&archive)?;
@@ -152,10 +166,19 @@ fn run() -> Result<()> {
             let report = report_archive(&archive)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
+        Commands::Digest { archive, format } => {
+            let output = archive_digests(&archive)?;
+            match format.as_str() {
+                "json" => println!("{}", serde_json::to_string_pretty(&output)?),
+                "toon" => println!("{}", render_toon(&output)?),
+                other => return Err(anyhow!("unsupported digest format: {other}")),
+            }
+        }
         Commands::Sidecar { archive, format } => {
             let inspection = inspect_archive(&archive)?;
             match format.as_str() {
-                "json" | "toon" => println!("{}", serde_json::to_string_pretty(&inspection.sidecar)?),
+                "json" => println!("{}", serde_json::to_string_pretty(&inspection.sidecar)?),
+                "toon" => println!("{}", render_toon(&inspection.sidecar)?),
                 other => return Err(anyhow!("unsupported sidecar format: {other}")),
             }
         }
@@ -174,3 +197,34 @@ fn main() {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{Cli, Commands};
+    use aicx_core::render_toon;
+    use clap::Parser;
+
+    #[test]
+    fn parses_digest_subcommand() {
+        let cli = Cli::parse_from(["aicx", "digest", "archive.aicx", "--format", "toon"]);
+        assert!(matches!(&cli.command, Commands::Digest { .. }));
+        if let Commands::Digest { archive, format } = &cli.command {
+            assert_eq!(archive, "archive.aicx");
+            assert_eq!(format, "toon");
+        }
+    }
+
+    #[test]
+    fn digest_output_serializes_expected_fields() {
+        let output = aicx_core::ArchiveDigests {
+            manifest_digest: "manifest-digest".to_string(),
+            sidecar_digest: "sidecar-digest".to_string(),
+        };
+        let json = serde_json::to_value(&output).expect("serialize digest output");
+        assert_eq!(json["manifest_digest"], "manifest-digest");
+        assert_eq!(json["sidecar_digest"], "sidecar-digest");
+
+        let toon = render_toon(&output).expect("render toon");
+        assert!(toon.contains("manifest_digest"));
+        assert!(toon.contains("sidecar_digest"));
+    }
+}

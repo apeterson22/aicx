@@ -8,7 +8,7 @@ __pycache__/
 *.so
 *.dll
 *.dylib
+*.aicx
 dist/
 build/
 *.egg-info/
-

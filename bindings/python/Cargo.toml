@@ -14,5 +14,5 @@ crate-type = ["cdylib"]
 anyhow.workspace = true
 aicx-core = { path = "../../crates/aicx-core" }
 pyo3.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-

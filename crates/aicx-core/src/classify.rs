@@ -63,14 +63,14 @@ pub fn classify(path: &str, data: &[u8]) -> FileKind {
     if ext.as_deref() == Some("csv") {
         return FileKind::Csv;
     }
-    if matches!(ext.as_deref(), Some("log" | "txt")) {
-        if is_probably_text(data) {
-            return FileKind::Logs;
-        }
+    if matches!(ext.as_deref(), Some("log" | "txt")) && is_probably_text(data) {
+        return FileKind::Logs;
     }
     if let Some(name) = basename.as_deref() {
-        if matches!(name, "dockerfile" | "makefile" | "cargo.toml" | "package.json" | "pyproject.toml")
-        {
+        if matches!(
+            name,
+            "dockerfile" | "makefile" | "cargo.toml" | "package.json" | "pyproject.toml"
+        ) {
             return FileKind::SourceCode;
         }
     }
@@ -83,18 +83,21 @@ pub fn classify(path: &str, data: &[u8]) -> FileKind {
         }
         if let Ok(text) = std::str::from_utf8(data) {
             let trimmed = text.trim_start();
-            if trimmed.starts_with('{') || trimmed.starts_with('[') {
-                if serde_json::from_str::<serde_json::Value>(text).is_ok() {
-                    return FileKind::Json;
-                }
+            if (trimmed.starts_with('{') || trimmed.starts_with('['))
+                && serde_json::from_str::<serde_json::Value>(text).is_ok()
+            {
+                return FileKind::Json;
             }
             if trimmed.starts_with('<') && trimmed.contains('>') {
                 return FileKind::Xml;
             }
-            if text.lines().any(|line| line.contains(':') && line.contains(' ')) {
+            if text
+                .lines()
+                .any(|line| line.contains(':') && line.contains(' '))
+            {
                 return FileKind::Yaml;
             }
-            if text.lines().any(|line| line.contains(',') ) {
+            if text.lines().any(|line| line.contains(',')) {
                 return FileKind::Csv;
             }
             if is_probably_text(data) {
@@ -125,4 +128,3 @@ pub fn detect_language(path: &str) -> Option<String> {
     };
     Some(language.to_string())
 }
-

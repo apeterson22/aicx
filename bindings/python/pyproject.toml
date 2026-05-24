@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.7,<2"]
+requires = ["maturin>=1.13.1,<2"]
 build-backend = "maturin"
 
 [project]
@@ -11,4 +11,3 @@ requires-python = ">=3.10"
 [tool.maturin]
 python-source = "python"
 module-name = "aicx_native"
-

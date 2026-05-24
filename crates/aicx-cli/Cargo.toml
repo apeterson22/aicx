@@ -10,5 +10,5 @@ repository.workspace = true
 anyhow.workspace = true
 aicx-core = { path = "../aicx-core" }
 clap.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-
