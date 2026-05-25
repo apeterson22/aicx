@@ -10,4 +10,4 @@ requires-python = ">=3.10"
 
 [tool.maturin]
 python-source = "python"
-module-name = "aicx_native"
+module-name = "aicx"
