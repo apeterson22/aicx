@@ -22,6 +22,8 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test Rust workspace
         run: cargo test --workspace
+        env:
+          RUST_TEST_THREADS: 1
 
   python-binding:
     runs-on: aegis-local
@@ -29,7 +31,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - name: Install maturin
-        run: python3 -m pip install maturin --break-system-packages
+        run: python3 -m pip install maturin patchelf --break-system-packages
       - name: Build Python bindings
         working-directory: bindings/python
         run: maturin build --release
