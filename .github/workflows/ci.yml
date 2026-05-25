@@ -27,13 +27,9 @@ jobs:
     runs-on: aegis-local
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-          cache: pip
       - uses: dtolnay/rust-toolchain@stable
       - name: Install maturin
-        run: python -m pip install --upgrade pip maturin
+        run: python3 -m pip install --upgrade pip maturin
       - name: Build Python bindings
         working-directory: bindings/python
         run: maturin build --release
