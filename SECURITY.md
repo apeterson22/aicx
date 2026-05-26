@@ -1,25 +1,39 @@
-# Security Notes
+# Security Policy: AICX
 
-AICX treats every archive as untrusted input.
+This document outlines the core security practices, threat assumptions, and path validation safety rules for the **AICX** deterministic archiving and semantic packaging engine.
 
-- Validate header lengths and manifest tables before reading chunk data.
-- Reject malformed offsets, lengths, non-contiguous chunk layouts, duplicate output paths, unsafe restore targets, symlinked archive output paths, symlinked extraction roots, hard-linked overwrite targets, and non-regular overwrite targets.
-- Normalize archive output parents before directory creation so `..` segments cannot create the wrong directory tree.
-- Canonicalize the final pack output parent before writing the archive so intermediate symlink hops cannot redirect output.
-- Reject unsafe archive output filenames such as `.` and `..` before writing.
-- Require UTF-8 archive output filenames so pack destinations stay portable and deterministic.
-- Validate pack output filenames before any directory creation so failed writes do not leave partial directories behind.
-- Stage pack and unpack output through temp files in the destination directory, then persist atomically so failed restores do not leave partial files behind.
-- Restore executable hints from the manifest after validation, using a conservative mode policy on unpacked files.
-- Reject filesystem-root pack and unpack destinations.
-- Canonicalize the unpack target root after normalizing its path so intermediate symlink hops cannot redirect extraction.
-- Refuse symlink escapes, hard-link escapes, special-file overwrite targets, and file overwrites unless explicitly enabled.
-- Reject non-UTF-8 input paths before packing so archive metadata stays deterministic and machine-readable, including nested directory entries.
-- Normalize preserved source-path metadata and keep directory entries archive-relative so manifests retain safe, canonicalized original-path strings instead of raw traversal input.
-- Preserve canonical original-path metadata on pack and reject non-canonical original-path metadata on load. Relative single-file inputs keep their normalized relative path; absolute single-file inputs keep only the basename.
-- Verify chunk and file hashes, plus manifest size totals and sidecar consistency, before writing restored output.
-- Rebuild and compare the full sidecar deterministically so advisory-only metadata cannot be altered without detection.
+---
 
-AICX does not perform encryption or execution. Those responsibilities belong to AegisQR in its separate repository.
+## 🛡️ Secure Defaults
 
-Enterprise plugin integrations must use HTTPS and authenticated tokens for API traffic. SSH is reserved for admin access, tunneling, or host automation and must not bypass archive validation or repository authorization.
+AICX enforces strict safety constraints to insulate system hosts and AI agents from adversarial archive structures:
+
+* **Untrusted Input Assumption:** Every archive is treated as potentially hostile input.
+* **Deterministic Hashing:** All archive contents are strictly cataloged using deterministic **Blake3** hashing.
+* **Path-Traversal Block:** Unsafe parent directory escapes (`..` injections) or filesystem root pathways are strictly blocked at the library core. Unpack directories are canonicalized and isolated.
+* **Redirection Protection:** Symlinks and hardlinks are completely rejected during packing and extraction to prevent host path-redirection exploits.
+* **Atomic Restores:** File and directory extractions are staged through temporary files in the destination directory, then persisted atomically so failed restores do not leave partial or corrupt states.
+* **Validation Prior to Restore:** Chunk hashes, manifest totals, and sidecar structures are fully validated *prior* to writing any restored output.
+
+---
+
+## ⚡ Threat Assumptions
+
+Our design operates under the following threat model constraints:
+1. **Adversarial Ingestion:** Attackers may inject malicious symbolic links or path-escapes inside catalog directories, trying to overwrite critical system configurations.
+2. **Context Alteration:** Advisory-only metadata could be modified to deceive autonomous AI agents. AICX resolves this by rebuilding and verifying sidecars deterministically.
+3. **Host Security:** Unpacking or inspecting archives must never execute binary payloads. Executable modes are quarantined or staged under conservative local policies.
+
+---
+
+## 🔒 Privacy & Offline Commitment
+
+AICX is committed to **100% user privacy**:
+* **Zero Telemetry:** The tool contains no analytics, telemetry scripts, or network-bound call-homes.
+* **Offline Licensing:** License status checks and `.aqlic` validations execute entirely locally against offline verification keys. Shared config locations `/etc/aegisqr/` are used to sync license states with AegisQR.
+
+---
+
+## 🐛 Vulnerability Disclosure
+
+If you identify a security issue, please do not open a public issue. Report it privately to the maintainers or utilize GitHub's Private Vulnerability Reporting features to coordinate a fix.
