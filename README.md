@@ -227,9 +227,63 @@ print(hashes["manifest_digest"], hashes["sidecar_digest"])
 
 ## Safety Notes
 
-- Treat archive inputs as untrusted.
-- Treat archive outputs as single-use unless you intentionally delete or replace them first.
-- Keep extraction inside a controlled directory.
-- Do not disable hash or path validation for convenience.
-- Prefer the Rust core for new features and security-sensitive behavior.
-- If you build a UI alternative to the CLI, have it call the Rust core or CLI rather than reimplementing archive parsing.
+- Treat all archive inputs as untrusted and potentially hostile.
+- Keep extraction inside designated, sandboxed directories.
+- Do not disable cryptographic hash or path-traversal validation for convenience.
+- Expired licenses trigger warning indicators but **never block core packaging or extraction utility** (protecting your archives from being locked out).
+
+---
+
+## Enterprise Licensing & Administration
+
+AICX features an offline-first cryptographic licensing layer, sharing configuration and trust directories seamlessly with AegisQR:
+* Global config path: `/etc/aegisqr/license.aqlic`
+* Portable user configuration: `~/.config/aegisqr/license.aqlic`
+* Dynamic verification keys directory: `/etc/aegisqr/trusted_keys.d/`
+
+### Licensing CLI Reference
+
+##### 1. Check License Status
+```bash
+aicx license status
+```
+*Tip:* Use the mandated `--json` flag to inspect programmatically:
+```bash
+aicx license status --json
+```
+
+##### 2. Install a Shared `.aqlic` File
+```bash
+aicx license install ./my_license.aqlic
+```
+
+##### 3. View Full License Structure
+```bash
+aicx license show --json
+```
+
+---
+
+## Standardized JSON Output for Programmatic Integration
+
+To support robust parent child-processes (such as Python `subprocess` or Node `child_process` wrappers), key query commands—including `inspect`, `verify`, `digest`, and `license status`—natively output standardized, version-locked JSON. This prevents programmatic parser failures in downstream software workflows.
+
+---
+
+## 📦 Mission: Deterministic Information Sharing in the AI Age
+
+In the era of large language models, retrieval-augmented generation (RAG), and autonomous AI agent execution, data flows with unprecedented speed and complexity. AI models dynamically ingest massive directories, code repositories, and planograms to make real-time decisions.
+
+Without a rigid verification framework, this fluid data sharing introduces critical risks:
+* **Hallucinatory Context Ingestion:** If files in a RAG pipeline are unverified or subtly modified, models generate incorrect decisions based on altered inputs.
+* **Malicious Executable Traversal:** Hostile archives can exploit folder traversals to overwrite critical system components.
+* **Lack of Metadata Traceability:** Agents cannot quickly index large datasets without expensive, slow scanning steps.
+
+### The AICX Solution: Deterministic context validation
+
+AICX solves this by creating **tamper-proof, deterministic knowledge capsules** tailored for both human developers and autonomous AI:
+* **Blake3 Manifest Verification:** All contents are compiled with strict deterministic Blake3 hash catalogs, guaranteeing bit-for-bit authenticity.
+* **ScoutAI Sidecar Discovery:** Companion sidecars dynamically expose schema versioning, query hints, risk level classifications, and entrypoint candidates, allowing agents to assess capsules instantly *before* unpacking.
+* **Hardened Traversal Safeguards:** Path-traversal exploits (such as `..` injections) and symlinks are strictly blocked at the core library level, preventing directory escapes.
+
+Through rigid mathematical verification and structured machine-readable metadata sidecars, AICX enables organizations and AI agents to share local catalogs, configurations, and RAG contexts with total, auditable certainty in the AI age.

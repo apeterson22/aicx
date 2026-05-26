@@ -10,7 +10,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "aicx-cli"
-version = "0.1.0"
+version = "0.1.0-featured"
 dependencies = [
  "aicx-core",
  "anyhow",
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "aicx-core"
-version = "0.1.0"
+version = "0.1.0-featured"
 dependencies = [
  "anyhow",
  "base64",
@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "aicx-py"
-version = "0.1.0"
+version = "0.1.0-featured"
 dependencies = [
  "aicx-core",
  "anyhow",
