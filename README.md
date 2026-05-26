@@ -213,6 +213,63 @@ hashes = json.loads(digest("archive.aicx"))
 print(hashes["manifest_digest"], hashes["sidecar_digest"])
 ```
 
+---
+
+## Integration with AegisQR and the AegisQR Suite
+
+AICX and **AegisQR** are designed as sibling, decoupled repositories that communicate strictly via deterministic metadata sidecars and CLI workflows. Together, they form the **AegisQR Suite**—a unified package for zero-trust enterprise secure transport, in-store inventory tracking, and RAG context validation.
+
+### 1. The Sealed Knowledge Capsule Workflow
+In this scenario, AICX packages raw data, catalogs, or codebases, and AegisQR encrypts, signs, and physicalizes the capsule.
+
+```mermaid
+graph TD
+    A[Raw Local Directory] -- "1. aicx pack" --> B[Deterministic .aicx Archive]
+    B -- "Generates sidecar" --> C[.sidecar.json Metadata]
+    B & C -- "2. aegisqr pack --aicx" --> D[Encrypted & Signed .aqr Capsule]
+    D -- "3. aegisqr export qr" --> E[Scannable QR Packets]
+    E -- "Camera / Scanner" --> F[Reassembled .aqr Capsule]
+    F -- "4. aegisqr unpack" --> G[Restored .aicx Archive]
+    G -- "5. aicx verify & unpack" --> H[Safe Extracted Directory]
+```
+
+#### Step-by-Step Workflow Example:
+```bash
+# Step 1: Package raw store catalog data with AICX
+aicx pack ./catalog_directory --profile retail-knowledge-pack --out store_catalog.aicx
+
+# Step 2: Seal inside AegisQR using --aicx for automatic sidecar autodiscovery
+# This reads 'store_catalog.sidecar.json' and embeds risk levels into the AQR1 header
+aegisqr pack store_catalog.aicx --out store_catalog.aqr --aicx --passphrase-stdin <<< "my-secret-passphrase"
+
+# Step 3: Inspect the public capsule header without the passphrase
+aegisqr inspect store_catalog.aqr
+
+# Step 4: Split into visual QR packets for physical camera transit
+aegisqr export qr store_catalog.aqr --out qr_sheets
+
+# Step 5: Import and verify cryptographic signature
+aegisqr import qr qr_sheets --out imported_catalog.aqr
+aegisqr verify imported_catalog.aqr
+
+# Step 6: Decrypt the .aicx archive
+aegisqr unpack imported_catalog.aqr --out restored_archive/
+
+# Step 7: Unpack securely with path-traversal safeguards
+aicx unpack restored_archive/store_catalog.aicx --out ./final_catalog/
+```
+
+### 2. Coordinated Enterprise Licensing
+Both applications share the exact same cryptographic, offline-first licensing core, validating organization tiers and seat counts natively without calling home:
+* **Shared Config Paths:** Installing a `.aqlic` file with `aegisqr license install` automatically updates `/etc/aegisqr/license.aqlic` or `~/.config/aegisqr/license.aqlic`, immediately activating license permissions for `aicx` as well.
+* **Shared Key Rotation:** Trust directories in `/etc/aegisqr/trusted_keys.d/` dynamically rotate Ed25519 signing keys for both tools concurrently.
+
+### 3. AegisQR Suite Package Installer
+The root `aegisqr-suite` repository acts as the packaging and distribution layer. It compiles both codebases in release mode and bundles them into a single unified distribution package with `install.sh` and `uninstall.sh` scripts, making it trivial for enterprise operations teams to manage, version-control, and roll out updates across store networks.
+
+---
+
+
 ## Repository Layout
 
 - `crates/aicx-core/`: archive model, validation, hashing, safe paths, and pack/unpack logic.
