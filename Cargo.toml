@@ -30,3 +30,6 @@ xz2 = "0.1"
 zstd = "0.13"
 tempfile = "3.12"
 libc = "0.2"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+base64 = "0.22"
+hex = "0.4"

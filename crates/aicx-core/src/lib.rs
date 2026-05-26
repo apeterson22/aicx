@@ -8,6 +8,7 @@ mod pathing;
 mod sidecar;
 mod toon;
 mod transform;
+pub mod license;
 
 pub use archive::{
     archive_digests, compare_profiles, extract_archive, inspect_archive, list_archive_paths,

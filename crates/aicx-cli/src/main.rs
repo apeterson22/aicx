@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Context};
 use clap::{Parser, Subcommand};
 
 use aicx_core::{
@@ -11,7 +11,9 @@ use aicx_core::{
 };
 
 #[derive(Parser, Debug)]
-#[command(name = "aicx", about = "Adaptive Intelligent Compression eXchange")]
+#[command(name = "aicx")]
+#[command(version = "0.1.0-featured")]
+#[command(about = "Adaptive Intelligent Compression eXchange")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -80,6 +82,25 @@ enum Commands {
         #[arg(long = "chunk-size", default_value_t = 4 * 1024 * 1024)]
         chunk_size: usize,
     },
+    License {
+        #[command(subcommand)]
+        sub: LicenseSub,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum LicenseSub {
+    Status {
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+    Install {
+        path: PathBuf,
+    },
+    Show {
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
 }
 
 fn parse_profile(value: &str) -> Result<ArchiveProfile> {
@@ -91,6 +112,11 @@ fn parse_hash(value: &str) -> Result<HashAlgorithm> {
 }
 
 fn run() -> Result<()> {
+    let current_time_secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_secs();
+    aicx_core::license::handle_license_reminders(current_time_secs);
+
     let cli = Cli::parse();
     match cli.command {
         Commands::Pack {
@@ -186,6 +212,94 @@ fn run() -> Result<()> {
             let rows = compare_profiles(&inputs, chunk_size)?;
             println!("{}", serde_json::to_string_pretty(&rows)?);
         }
+        Commands::License { sub } => match sub {
+            LicenseSub::Status { json } => {
+                let current_time_secs = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_secs();
+                let status = aicx_core::license::verify_license_status(current_time_secs);
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&status)?);
+                } else {
+                    println!("License Status: {}", status.status.to_uppercase());
+                    if let Some(org) = status.organization {
+                        println!("Organization:   {}", org);
+                    }
+                    if let Some(tier) = status.tier {
+                        println!("Tier:           {}", tier);
+                    }
+                    if let Some(seats) = status.seats {
+                        println!("Seats:          {}", seats);
+                    }
+                    if let Some(expires) = status.expires_at {
+                        println!("Expires At:     {}", expires);
+                    }
+                    if let Some(rem) = status.days_remaining {
+                        println!("Days Remaining: {}", rem);
+                    }
+                }
+            }
+            LicenseSub::Install { path } => {
+                let bytes = std::fs::read(&path).context("failed to read source license file")?;
+                let lic: aicx_core::license::LicenseFile = serde_json::from_slice(&bytes)
+                    .context("invalid license file format")?;
+                aicx_core::license::check_license_integrity(&lic)
+                    .context("license integrity check failed (invalid signature or unknown key)")?;
+
+                let mut installed = false;
+                
+                // Try /etc/aegisqr
+                if std::fs::create_dir_all("/etc/aegisqr").is_ok() {
+                    if std::fs::write("/etc/aegisqr/license.aqlic", &bytes).is_ok() {
+                        installed = true;
+                        println!("Installed license to /etc/aegisqr/license.aqlic");
+                    }
+                }
+
+                if !installed {
+                    // Fallback to home folder
+                    if let Ok(home) = std::env::var("HOME") {
+                        let user_dir = format!("{}/.config/aegisqr", home);
+                        let user_path = format!("{}/license.aqlic", user_dir);
+                        std::fs::create_dir_all(&user_dir)?;
+                        std::fs::write(&user_path, &bytes)?;
+                        installed = true;
+                        println!("Installed license to {}", user_path);
+                    } else if let Ok(userprofile) = std::env::var("USERPROFILE") {
+                        let user_dir = format!("{}/.config/aegisqr", userprofile);
+                        let user_path = format!("{}/license.aqlic", user_dir);
+                        std::fs::create_dir_all(&user_dir)?;
+                        std::fs::write(&user_path, &bytes)?;
+                        installed = true;
+                        println!("Installed license to {}", user_path);
+                    }
+                }
+
+                if !installed {
+                    std::fs::write("./license.aqlic", &bytes)?;
+                    println!("Installed license to ./license.aqlic");
+                }
+            }
+            LicenseSub::Show { json } => {
+                let mut found = false;
+                for path in aicx_core::license::get_license_search_paths() {
+                    if path.is_file() {
+                        let content = std::fs::read_to_string(&path)?;
+                        if json {
+                            println!("{}", content.trim());
+                        } else {
+                            let lic: aicx_core::license::LicenseFile = serde_json::from_str(&content)?;
+                            println!("{:#?}", lic);
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return Err(anyhow!("No installed license found."));
+                }
+            }
+        },
     }
     Ok(())
 }

@@ -21,3 +21,6 @@ walkdir.workspace = true
 xz2.workspace = true
 zstd.workspace = true
 libc.workspace = true
+ed25519-dalek.workspace = true
+base64.workspace = true
+hex.workspace = true
