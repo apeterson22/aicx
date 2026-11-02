@@ -12,7 +12,7 @@ jobs:
   rust:
     runs-on: aegis-local
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -28,7 +28,7 @@ jobs:
   python-binding:
     runs-on: aegis-local
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Install maturin
         run: python3 -m pip install maturin patchelf --break-system-packages
